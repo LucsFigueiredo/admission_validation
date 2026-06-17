@@ -8,6 +8,9 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
+app.UseDefaultFiles();
+
+app.UseStaticFiles();
 app.MapControllers();
 
 // Configure the HTTP request pipeline.

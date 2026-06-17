@@ -1,0 +1,38 @@
+# Build outputs
+bin/
+obj/
+
+# User-specific files
+.vs/
+.vscode/
+
+# Rider
+.idea/
+
+# ASP.NET logs
+logs/
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test results
+TestResults/
+
+# NuGet packages (usually not committed)
+packages/
+
+# Publish output
+publish/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Coverage reports
+coverage/
+*.coverage
+*.coveragexml
