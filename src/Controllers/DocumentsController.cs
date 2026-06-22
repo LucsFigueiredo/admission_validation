@@ -28,6 +28,9 @@ namespace admission_validation.Controllers
             { 
                 message = "Documentos enviados com sucesso" 
             });
+
+            var storageService = new FileStorageService();
+            storageService.SaveFiles(request);
         }
     }
 }
