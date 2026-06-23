@@ -11,6 +11,8 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<FileStorageService>();
 builder.Services.AddScoped<DocumentValidationService>();
 builder.Services.AddScoped<OcrService>();
+builder.Services.AddScoped<RgValidator>();
+
 
 var app = builder.Build();
 

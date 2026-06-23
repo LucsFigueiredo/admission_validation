@@ -6,11 +6,13 @@ namespace admission_validation.Services
     {
         private readonly FileStorageService _storageService;
         private readonly OcrService _ocrService;
+        private readonly RgValidator _rgValidator;
 
-        public DocumentValidationService(FileStorageService storageService, OcrService ocrService)
+        public DocumentValidationService(FileStorageService storageService, OcrService ocrService, RgValidator rgValidator)
         {
             _storageService = storageService;
             _ocrService = ocrService;
+            _rgValidator = rgValidator;
         }
 
         private string SaveTempFile(IFormFile file)
@@ -32,18 +34,7 @@ namespace admission_validation.Services
                 ValidateRequired(request.MilitaryCertificate, "Certificado de reservista", errors);
 
             
-            if (request.RGFront != null)
-            {
-                var path = SaveTempFile(request.RGFront); // ou reutiliza seu storage
-
-                var ocr = new OcrService();
-                var text = ocr.ExtractText(path);
-
-                if (!IsValidRG(text))
-                {
-                    errors.Add("Documento enviado não parece ser um RG");
-                }
-            }
+            ValidateRG(request.RGFront);
 
 
             return errors;
@@ -62,22 +53,28 @@ namespace admission_validation.Services
 
         }
 
-        public bool IsValidRG(string text)
+        private void ValidateRG(IFormFile file)
         {
-            var normalized = Normalize(text);
+            if (file != null)
+            {
+                var path = SaveTempFile(file);
 
-            return normalized.Contains("RG") ||
-                normalized.Contains("REGISTRO") ||
-                normalized.Contains("GERAL");
-        }
+                try
+                {
+                    var ocr = new OcrService();
+                    var text = ocr.ExtractText(path);
 
-        private string Normalize(string text)
-        {
-            return text
-                .ToUpper()
-                .Replace(" ", "")
-                .Replace("\n", "")
-                .Replace("\r", "");
+                    if (!_rgValidator.Validate(text))
+                    {                  
+                        Console.WriteLine("OCR RESULT:");
+                        Console.WriteLine(text);
+                    }
+                }
+                finally
+                {
+                    File.Delete(path);
+                }
+            }
         }
     }
 }
