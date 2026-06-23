@@ -7,14 +7,17 @@ export default function UploadForm() {
             <label>Nome:</label>
             <input type="text" name="CandidateName" />
 
-            <label>RG:</label>
-            <input type="file" name="RG" />
+            <label>RG (Frente):</label>
+            <input type="file" name="RGFront" />
+
+            <label>RG (Verso):</label>
+            <input type="file" name="RGBack" />
 
             <label>CPF:</label>
             <input type="file" name="CPF" />
 
             <label>É homem?</label>
-            <input type="checkbox" name="IsMale" />
+            <input type="checkbox" name="IsMale" value="true" />
 
             <label>Certificado de reservista:</label>
             <input type="file" name="MilitaryCertificate" />

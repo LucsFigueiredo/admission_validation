@@ -36,3 +36,6 @@ publish/
 coverage/
 *.coverage
 *.coveragexml
+
+# Uploaded files by candidate
+Uploads/
