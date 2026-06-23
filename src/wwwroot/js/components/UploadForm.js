@@ -16,11 +16,19 @@ export default function UploadForm() {
             <label>CPF:</label>
             <input type="file" name="CPF" />
 
-            <label>É homem?</label>
-            <input type="checkbox" name="IsMale" value="true" />
-
             <label>Certificado de reservista:</label>
             <input type="file" name="MilitaryCertificate" />
+
+            <select name="IsMale">
+                <option value="true">Masculino</option>
+                <option value="false">Feminino</option>
+            </select>
+
+            <select name="EmployeeType">
+                <option value="Efetivo">Efetivo</option>
+                <option value="Comissionado">Comissionado</option>
+                <option value="Temporario">Temporario</option>
+            </select> 
 
             <button type="submit">Enviar</button>
 

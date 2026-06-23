@@ -1,3 +1,5 @@
+using admission_validation.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -5,6 +7,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 builder.Services.AddControllers();
+
+builder.Services.AddScoped<FileStorageService>();
+builder.Services.AddScoped<DocumentValidationService>();
+builder.Services.AddScoped<OcrService>();
 
 var app = builder.Build();
 

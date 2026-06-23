@@ -10,24 +10,24 @@ namespace admission_validation.Controllers
     [Route("api/documents")]
     public class DocumentsController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
+        private readonly DocumentValidationService _validationService;
+        private readonly FileStorageService _storageService;
 
-        public DocumentsController(IConfiguration configuration)
+        public DocumentsController(DocumentValidationService validationService, FileStorageService storageService)
         {
-            _configuration = configuration;
+            _validationService = validationService;
+            _storageService = storageService;
         }
         
         [HttpPost("upload")]
         public IActionResult Upload([FromForm] DocumentUploadRequest request)
         {
-            var validationService = new DocumentValidationService();
-            var storageService = new FileStorageService(_configuration);
 
-            var errors = validationService.Validate(request);
+            var errors = _validationService.Validate(request);
 
             if (errors.Any())
             {
-                storageService.SaveFiles(request, "Rejected");
+                _storageService.SaveFiles(request, "Rejected");
 
                 return BadRequest(new
                 {
@@ -35,13 +35,15 @@ namespace admission_validation.Controllers
                     errors
                 });
             }
-
-            storageService.SaveFiles(request, "Approved");
-
-            return Ok(new
+            else 
             {
-                message = "Documentos enviados com sucesso"
-            });
+                _storageService.SaveFiles(request, "Approved");
+
+                return Ok(new
+                {
+                    message = "Documentos enviados com sucesso"
+                });
+            }
         }
     }
 }
