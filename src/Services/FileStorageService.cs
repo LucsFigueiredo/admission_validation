@@ -14,7 +14,7 @@ namespace admission_validation.Services
             _basePath = config["Storage:BasePath"] ?? "Uploads";
         }
 
-        public void SaveFiles(DocumentUploadRequest request, string status)
+        public string SaveFiles(DocumentUploadRequest request, string status)
         {
             var employeeFolder = request.EmployeeType.ToString();
 
@@ -40,6 +40,8 @@ namespace admission_validation.Services
                     SaveFile(file, path, prop.Name);
                 }
             }
+
+            return path;
         }
 
         private void SaveFile(IFormFile file, string folder, string name)
@@ -70,6 +72,27 @@ namespace admission_validation.Services
             file.CopyTo(stream);
 
             return filePath;
+        }
+
+        public void GenerateReport(string folder, string candidateName, List<DocumentValidationDetail> details)
+        {
+            var path = Path.Combine(folder, "report.txt");
+
+            var sb = new System.Text.StringBuilder();
+
+            sb.AppendLine($"Candidato: {candidateName}");
+            sb.AppendLine("");
+
+            foreach (var doc in details)
+            {
+                sb.AppendLine($"{doc.DocumentName}:");
+                sb.AppendLine($"- Score: {doc.Score}");
+                sb.AppendLine($"- Status: {doc.Status}");
+                sb.AppendLine($"- Observação: {doc.Message}");
+                sb.AppendLine("");
+            }
+
+            File.WriteAllText(path, sb.ToString());
         }
     }
 }

@@ -23,27 +23,36 @@ namespace admission_validation.Controllers
         public IActionResult Upload([FromForm] DocumentUploadRequest request)
         {
 
-            var errors = _validationService.Validate(request);
+            var results = _validationService.Validate(request);
 
-            if (errors.Any())
+            
+            var status = GetFinalStatus(results);
+
+            var folderPath = _storageService.SaveFiles(request, status);
+
+            _storageService.GenerateReport(
+                folderPath,
+                request.CandidateName,
+                results
+            );
+  
+            if (status == "Rejected")
             {
-                _storageService.SaveFiles(request, "Rejected");
-
-                return BadRequest(new
-                {
-                    message = "Erro na validação",
-                    errors
-                });
+                return Redirect("/erro.html");
             }
-            else 
-            {
-                _storageService.SaveFiles(request, "Approved");
 
-                return Ok(new
-                {
-                    message = "Documentos enviados com sucesso"
-                });
-            }
+            return Redirect("/sucesso.html");
+        }
+
+        private string GetFinalStatus(List<DocumentValidationDetail> results)
+        {
+            if (results.Any(r => r.Score < 40))
+                return "Rejected";
+
+            if (results.Any(r => r.Score < 70))
+                return "Review";
+
+            return "Approved";
         }
     }
 }

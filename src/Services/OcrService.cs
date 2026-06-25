@@ -1,4 +1,6 @@
 using Tesseract;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace admission_validation.Services
 {
@@ -6,21 +8,40 @@ namespace admission_validation.Services
     {
         public string ExtractText(string filePath)
         {
-            
-            var extension = Path.GetExtension(filePath).ToLower();
+            var processedPath = PreprocessImage(filePath);
 
-            if (extension != ".png" && extension != ".jpg" && extension != ".jpeg")
+            try
             {
-                throw new Exception("Formato não suportado pelo OCR (use imagem)");
+                using var engine = new TesseractEngine(@"./tessdata", "por", EngineMode.Default);
+
+                using var img = Pix.LoadFromFile(processedPath);
+
+                using var page = engine.Process(img);
+
+                return page.GetText();
             }
+            finally
+            {
+                File.Delete(processedPath);
+            }
+        }
+        
+        public string PreprocessImage(string filePath)
+        {
+            using var image = Image.Load(filePath);
 
-            using var engine = new TesseractEngine(@"./tessdata", "por", EngineMode.Default);
+            image.Mutate(x =>
+                x.Grayscale()              // remove cores
+                .Contrast(1.8f)           // aumenta contraste
+                .Resize(image.Width * 2, image.Height * 2)       // dobra resolução
+                .GaussianSharpen()          // melhora nitidez
+            );
 
-            using var img = Pix.LoadFromFile(filePath);
+            var newPath = filePath.Replace(".", "_processed.");
 
-            using var page = engine.Process(img);
+            image.Save(newPath);
 
-            return page.GetText();
+            return newPath;
         }
     }
 }

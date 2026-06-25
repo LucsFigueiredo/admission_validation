@@ -1,34 +1,21 @@
 using System.Text.RegularExpressions;
 
-public class RgValidator
+public class CpfValidator
 {
     public int CalculateScore(string text)
     {
         var normalized = Normalize(text);
+
         int score = 0;
 
-        // RG clássico
-        if (normalized.Replace("6", "G").Contains("RG"))
-            score += 20;
-
-        if (normalized.Contains("REGISTRO"))
-            score += 20;
-
-        if (normalized.Contains("GERAL"))
-            score += 20;
-
-        // CIN / CPF
         if (normalized.Contains("CPF"))
-            score += 20;
+            score += 40;
 
-        if (normalized.Contains("CARTEIRADEIDENTIDADE"))
-            score += 20;
+        if (normalized.Contains("CADASTRODEPESSOASFISICAS"))
+            score += 40;
 
         if (HasCpfNumber(normalized))
-            score += 30;
-
-        if (HasRgNumber(normalized))
-            score += 20;
+            score += 60;
 
         return score;
     }
@@ -49,12 +36,5 @@ public class RgValidator
     {
         return Regex.IsMatch(text, @"\d{3}\.\d{3}\.\d{3}-\d{2}") ||
             Regex.IsMatch(text, @"\d{11}");
-    }
-
-    private bool HasRgNumber(string text)
-    {
-        return Regex.IsMatch(text, @"\d{1,2}\.\d{3}\.\d{3}") ||
-           Regex.IsMatch(text, @"\d{7,9}");
-
     }
 }

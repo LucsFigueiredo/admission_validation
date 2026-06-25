@@ -12,7 +12,7 @@ builder.Services.AddScoped<FileStorageService>();
 builder.Services.AddScoped<DocumentValidationService>();
 builder.Services.AddScoped<OcrService>();
 builder.Services.AddScoped<RgValidator>();
-
+builder.Services.AddScoped<CpfValidator>();
 
 var app = builder.Build();
 

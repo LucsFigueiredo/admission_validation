@@ -7,11 +7,8 @@ export default function UploadForm() {
             <label>Nome:</label>
             <input type="text" name="CandidateName" />
 
-            <label>RG (Frente):</label>
-            <input type="file" name="RGFront" />
-
-            <label>RG (Verso):</label>
-            <input type="file" name="RGBack" />
+            <label>RG ou CIN:</label>
+            <input type="file" name="RG" />
 
             <label>CPF:</label>
             <input type="file" name="CPF" />
