@@ -16,6 +16,15 @@ export default function UploadForm() {
             <label>Certificado de reservista:</label>
             <input type="file" name="MilitaryCertificate" />
 
+            <label>Comprovante de Endereço:</label>
+            <input type="file" name="AdressProof" />
+
+            <label>PIS:</label>
+            <input type="file" name="Pis" />
+
+            <label>Titulo de Eleitor:</label>
+            <input type="file" name="VoterCard" />
+
             <select name="IsMale">
                 <option value="true">Masculino</option>
                 <option value="false">Feminino</option>

@@ -35,13 +35,12 @@ namespace admission_validation.Controllers
                 request.CandidateName,
                 results
             );
-  
-            if (status == "Rejected")
-            {
-                return Redirect("/erro.html");
-            }
 
-            return Redirect("/sucesso.html");
+            return Ok(new
+            {
+                status = status,
+                documents = results
+            });
         }
 
         private string GetFinalStatus(List<DocumentValidationDetail> results)

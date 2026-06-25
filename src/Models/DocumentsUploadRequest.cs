@@ -14,6 +14,9 @@ namespace admission_validation.Models
         public IFormFile? RG { get; set; }
         public IFormFile? CPF { get; set; }
         public IFormFile? MilitaryCertificate { get; set; }
+        public IFormFile? AdressProof { get; set; }
+        public IFormFile? Pis { get; set; }
+        public IFormFile? VoterCard { get; set; }
         public EmployeeType EmployeeType { get; set; }
     }
 }

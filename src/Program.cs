@@ -13,6 +13,9 @@ builder.Services.AddScoped<DocumentValidationService>();
 builder.Services.AddScoped<OcrService>();
 builder.Services.AddScoped<RgValidator>();
 builder.Services.AddScoped<CpfValidator>();
+builder.Services.AddScoped<AdressValidator>();
+builder.Services.AddScoped<PisValidator>();
+builder.Services.AddScoped<VoterValidator>();
 
 var app = builder.Build();
 
