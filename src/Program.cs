@@ -15,7 +15,17 @@ builder.Services.AddScoped<RgValidator>();
 builder.Services.AddScoped<CpfValidator>();
 builder.Services.AddScoped<AdressValidator>();
 builder.Services.AddScoped<PisValidator>();
+builder.Services.AddScoped<ExtratoValidator>();
+builder.Services.AddScoped<NascimentoCasamentoValidator>();
+builder.Services.AddScoped<AntecedentesValidator>();
+builder.Services.AddScoped<DiplomaValidator>();
+builder.Services.AddScoped<HistoricoValidator>();
+builder.Services.AddScoped<BensValidator>();
+builder.Services.AddScoped<ProventosValidator>();
+builder.Services.AddScoped<AcumuloValidator>();
 builder.Services.AddScoped<VoterValidator>();
+builder.Services.AddScoped<DocumentValidationService>();
+builder.Services.AddScoped<TextHelper>();
 
 var app = builder.Build();
 

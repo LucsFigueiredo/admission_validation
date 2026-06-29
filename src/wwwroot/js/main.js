@@ -1,4 +1,5 @@
 import Home from "./pages/Home.js";
+import { documentsConfig } from "./data/DocumentsConfig.js";
 
 function Main() {
     console.log("App initialized!");
@@ -72,5 +73,68 @@ function showResult(result) {
     button.disabled = false;
     form.reset();
 }
+
+let currentStep = 1;
+const totalSteps = 5;
+
+window.nextStep = function () {
+
+    if (!validateStep(currentStep)) return;
+
+    document.getElementById(`step-${currentStep}`).style.display = "none";
+    currentStep++;
+    document.getElementById(`step-${currentStep}`).style.display = "block";
+
+    if (currentStep === 5) {
+        renderDocuments();
+    }
+};
+
+window.prevStep = function () {
+    document.getElementById(`step-${currentStep}`).style.display = "none";
+    currentStep--;
+    document.getElementById(`step-${currentStep}`).style.display = "block";
+};
+
+function validateStep(step) {
+    const stepElement = document.getElementById(`step-${step}`);
+
+    const inputs = stepElement.querySelectorAll("input, select, textarea");
+
+    for (let input of inputs) {
+        if (!input.checkValidity()) {
+            input.reportValidity(); // mostra erro padrão do navegador
+            return false;
+        }
+    }
+
+    return true;
+}
+
+window.renderDocuments = function () {
+    const container = document.getElementById("documentsContainer");
+
+    const gender = document.querySelector("[name='Gender']")?.value;
+    const hasPublicJob = document.querySelector("[name='HasPublicJob']")?.value;
+
+    const data = { gender, hasPublicJob };
+
+    container.innerHTML = "";
+
+    documentsConfig.forEach(doc => {
+        if (doc.condition && !doc.condition(data)) return;
+
+        container.innerHTML += `
+            <div class="doc-item">
+                <label>${doc.label}</label>
+                <p class="description">${doc.description}</p>
+                <input type="file" name="${doc.name}" ${doc.optional ? "" : "required"}>
+            </div>
+        `;
+    });
+};
+
+
+
 
 Main();

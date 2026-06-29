@@ -2,13 +2,13 @@ using System.Text.RegularExpressions;
 using admission_validation.Models;
 using admission_validation.Services;
 
-public class AdressValidator
+public class ExtratoValidator
 {
     private readonly FileStorageService _storageService;
     private readonly OcrService _ocrService;
     private readonly TextHelper _helperService;
 
-    public AdressValidator(OcrService ocrService, FileStorageService storageService, TextHelper helperService)
+    public ExtratoValidator(OcrService ocrService, FileStorageService storageService, TextHelper helperService)
     {
         _ocrService = ocrService;
         _storageService = storageService;
@@ -20,7 +20,7 @@ public class AdressValidator
         return _storageService.SaveTemp(file);
     }
 
-    public DocumentValidationDetail ValidateAdressProof(IFormFile file, string candidateName)
+    public DocumentValidationDetail ValidateExtrato(IFormFile file, string candidateName)
     {
         var extension = Path.GetExtension(file.FileName).ToLower();
 
@@ -28,10 +28,10 @@ public class AdressValidator
         {
             return new DocumentValidationDetail
             {       
-                DocumentName = "Comprovante de Endereço",
+                DocumentName = "Extrato - Santander",
                 Score = 0,
                 Status = "Formato inválido",
-                Message = "Comprovante de Endereço deve ser enviado como imagem"
+                Message = "Extrato do Santander deve ser enviado como imagem"
             };
         }
 
@@ -46,12 +46,12 @@ public class AdressValidator
 
             return new DocumentValidationDetail
             {
-                DocumentName = "Comprovante de Endereço",
+                DocumentName = "Extrato",
                 Score = score,
                 Status = score >= 60 ? "OK" : "Inconsistente",
                 Message = score >= 60
-                    ? $"Comprovante de Endereço válido e {nameResult.Message}"
-                    : $"Comprovante de Endereço pode estar incorreto e {nameResult.Message}"
+                    ? $"Extrato válido e {nameResult.Message}"
+                    : $"Extrato pode estar incorreto e {nameResult.Message}"
             };
         }
         finally
@@ -66,19 +66,16 @@ public class AdressValidator
 
         int score = 0;
 
-        if (normalized.Contains("CEP"))
+        if (normalized.Contains("SANTANDER"))
             score += 20;
 
-        if (normalized.Contains("RUA") || normalized.Contains("AVENIDA"))
+        if (normalized.Contains("4338"))
+            score += 20;
+
+        if (normalized.Contains("EXTRATO"))
             score += 5;
 
-        if (normalized.Contains("BAIRRO"))
-            score += 5;
-
-        if (normalized.Contains("CIDADE"))
-            score += 5;
-
-        if (HasCepNumber(normalized))
+        if (HasAccountNumber(normalized))
             score += 60;
 
         return score;
@@ -96,9 +93,9 @@ public class AdressValidator
             .Replace("\r", "");
     }
 
-    private bool HasCepNumber(string text)
+    private bool HasAccountNumber(string text)
     {
-        return Regex.IsMatch(text, @"\d{5}-\d{3}") ||
-            Regex.IsMatch(text, @"\d{8}");
+        return Regex.IsMatch(text, @"\d{8}-\d{1}") ||
+            Regex.IsMatch(text, @"\d{9}");
     }
 }

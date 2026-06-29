@@ -2,13 +2,13 @@ using System.Text.RegularExpressions;
 using admission_validation.Models;
 using admission_validation.Services;
 
-public class AdressValidator
+public class AcumuloValidator
 {
     private readonly FileStorageService _storageService;
     private readonly OcrService _ocrService;
     private readonly TextHelper _helperService;
 
-    public AdressValidator(OcrService ocrService, FileStorageService storageService, TextHelper helperService)
+    public AcumuloValidator(OcrService ocrService, FileStorageService storageService, TextHelper helperService)
     {
         _ocrService = ocrService;
         _storageService = storageService;
@@ -20,7 +20,7 @@ public class AdressValidator
         return _storageService.SaveTemp(file);
     }
 
-    public DocumentValidationDetail ValidateAdressProof(IFormFile file, string candidateName)
+    public DocumentValidationDetail ValidateAcumulo(IFormFile file, string candidateName)
     {
         var extension = Path.GetExtension(file.FileName).ToLower();
 
@@ -28,10 +28,10 @@ public class AdressValidator
         {
             return new DocumentValidationDetail
             {       
-                DocumentName = "Comprovante de Endereço",
+                DocumentName = "Declaração de Acúmulo",
                 Score = 0,
                 Status = "Formato inválido",
-                Message = "Comprovante de Endereço deve ser enviado como imagem"
+                Message = "Declaração de Acúmulo deve ser enviada como imagem"
             };
         }
 
@@ -46,12 +46,12 @@ public class AdressValidator
 
             return new DocumentValidationDetail
             {
-                DocumentName = "Comprovante de Endereço",
+                DocumentName = "Declaração de Acúmulo",
                 Score = score,
                 Status = score >= 60 ? "OK" : "Inconsistente",
                 Message = score >= 60
-                    ? $"Comprovante de Endereço válido e {nameResult.Message}"
-                    : $"Comprovante de Endereço pode estar incorreto e {nameResult.Message}"
+                    ? $"Declaração de Acúmulo válida e {nameResult.Message}"
+                    : $"Declaração de Acúmulo pode estar incorreta e {nameResult.Message}"
             };
         }
         finally
@@ -66,20 +66,17 @@ public class AdressValidator
 
         int score = 0;
 
-        if (normalized.Contains("CEP"))
+        if (normalized.Contains("DECLAROQUE"))
             score += 20;
 
-        if (normalized.Contains("RUA") || normalized.Contains("AVENIDA"))
-            score += 5;
+        if (normalized.Contains("ACUMULO"))
+            score += 20;
 
-        if (normalized.Contains("BAIRRO"))
-            score += 5;
+        if (normalized.Contains("PÚBLICA") || normalized.Contains("PUBLICO"))
+            score += 20;
 
-        if (normalized.Contains("CIDADE"))
-            score += 5;
-
-        if (HasCepNumber(normalized))
-            score += 60;
+        if (normalized.Contains("CARGO") || normalized.Contains("FUNÇÃO"))
+            score += 20;
 
         return score;
     }
@@ -94,11 +91,5 @@ public class AdressValidator
             .Replace(" ", "")
             .Replace("\n", "")
             .Replace("\r", "");
-    }
-
-    private bool HasCepNumber(string text)
-    {
-        return Regex.IsMatch(text, @"\d{5}-\d{3}") ||
-            Regex.IsMatch(text, @"\d{8}");
     }
 }

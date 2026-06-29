@@ -4,45 +4,46 @@ namespace admission_validation.Services
 {
     public class DocumentValidationService
     {
-        private readonly FileStorageService _storageService;
-        private readonly OcrService _ocrService;
         private readonly RgValidator _rgValidator;
         private readonly CpfValidator _cpfValidator;
         private readonly AdressValidator _adressValidator;
         private readonly PisValidator _pisValidator;
         private readonly VoterValidator _voterValidator;
+        private readonly ExtratoValidator _extratoValidator;
+        private readonly NascimentoCasamentoValidator _nascimentoValidator;
+        private readonly AntecedentesValidator _antecedentesValidator;
+        private readonly DiplomaValidator _diplomaValidator;
+        private readonly HistoricoValidator _historicoValidator;
+        private readonly BensValidator _bensValidator;
+        private readonly ProventosValidator _proventosValidator;
+        private readonly AcumuloValidator _acumuloValidator;
 
-        public DocumentValidationService(FileStorageService storageService, OcrService ocrService, RgValidator rgValidator, CpfValidator cpfValidator, AdressValidator adressValidator, PisValidator pisValidator, VoterValidator voterValidator)
+        public DocumentValidationService(RgValidator rgValidator, CpfValidator cpfValidator, AdressValidator adressValidator,
+         PisValidator pisValidator, VoterValidator voterValidator, ExtratoValidator extratoValidator, NascimentoCasamentoValidator nascimentoCasamentoValidator, AntecedentesValidator antecedentesValidator, 
+         DiplomaValidator diplomaValidator, HistoricoValidator historicoValidator, BensValidator bensValidator, ProventosValidator proventosValidator, AcumuloValidator acumuloValidator)
         {
-            _storageService = storageService;
-            _ocrService = ocrService;
             _rgValidator = rgValidator;
             _cpfValidator = cpfValidator;
             _adressValidator = adressValidator;
             _pisValidator = pisValidator;
             _voterValidator = voterValidator;
-        }
-
-        private string SaveTempFile(IFormFile file)
-        {
-            return _storageService.SaveTemp(file);
-        }
-
-        public class NameMatchResult
-        {
-            public int Matches { get; set; }
-            public int TotalParts { get; set; }
-            public string Message { get; set; } = "";
-            public bool IsMatch { get; set; }
+            _extratoValidator = extratoValidator;
+            _nascimentoValidator = nascimentoCasamentoValidator;
+            _antecedentesValidator = antecedentesValidator;
+            _diplomaValidator = diplomaValidator;
+            _historicoValidator = historicoValidator;
+            _bensValidator = bensValidator;
+            _proventosValidator = proventosValidator;
+            _acumuloValidator = acumuloValidator;
         }
 
         public List<DocumentValidationDetail> Validate(DocumentUploadRequest request)
         {
             var results = new List<DocumentValidationDetail>();
 
-            if (request.RG != null)
+            if (request.RGFile != null)
             {
-                results.Add(ValidateRG(request.RG, request.CandidateName));
+                results.Add(_rgValidator.ValidateRG(request.RGFile, request.CandidateName));
             }
             else
             {
@@ -55,9 +56,9 @@ namespace admission_validation.Services
                 });
             }
             
-            if (request.CPF != null)
+            if (request.CPFFile != null)
             {
-                results.Add(ValidateCPF(request.CPF, request.CandidateName));
+                results.Add(_cpfValidator.ValidateCPF(request.CPFFile, request.CandidateName));
             }
             else
             {
@@ -70,7 +71,7 @@ namespace admission_validation.Services
                 });
             }
 
-            if (request.MilitaryCertificate == null && request.IsMale == true)
+            if (request.MilitaryCertificateFile == null && request.IsMale == true)
             {
                 results.Add(new DocumentValidationDetail
                 {
@@ -81,9 +82,9 @@ namespace admission_validation.Services
                 });
             }
 
-            if (request.AdressProof != null)
+            if (request.AdressProofFile != null)
             {
-                results.Add(ValidateAdressProof(request.AdressProof, request.CandidateName));
+                results.Add(_adressValidator.ValidateAdressProof(request.AdressProofFile, request.CandidateName));
             }
             else
             {
@@ -96,9 +97,9 @@ namespace admission_validation.Services
                 });
             }
 
-            if (request.Pis != null)
+            if (request.PisFile != null)
             {
-                results.Add(ValidatePis(request.Pis, request.CandidateName));
+                results.Add(_pisValidator.ValidatePis(request.PisFile, request.CandidateName));
             }
             else
             {
@@ -111,9 +112,9 @@ namespace admission_validation.Services
                 });
             }
 
-            if (request.VoterCard != null)
+            if (request.VoterCardFile != null)
             {
-                results.Add(ValidateVoterCard(request.VoterCard, request.CandidateName));
+                results.Add(_voterValidator.ValidateVoterCard(request.VoterCardFile, request.CandidateName));
             }
             else
             {
@@ -126,261 +127,125 @@ namespace admission_validation.Services
                 });
             }
 
-            return results;
-        }
-
-        //=============================================== RG ===============================================
-
-        private DocumentValidationDetail ValidateRG(IFormFile file, string candidateName)
-        {
-            var extension = Path.GetExtension(file.FileName).ToLower();
-
-            if (extension != ".png" && extension != ".jpg" && extension != ".jpeg")
+            if (request.ExtratoFile != null)
             {
-                return new DocumentValidationDetail
-                {
-                    DocumentName = "RG",
-                    Score = 0,
-                    Status = "Formato inválido",
-                    Message = "RG deve ser enviado como imagem"
-                };
-            }
-
-            var path = SaveTempFile(file);
-
-            try
-            {
-                var text = _ocrService.ExtractText(path);
-                var score = _rgValidator.CalculateScore(text);
-
-                var nameResult = CheckNameMatch(text, candidateName);
-
-                return new DocumentValidationDetail
-                {
-                    DocumentName = "RG",
-                    Score = score,
-                    Status = score >= 70 ? "OK" : "Inconsistente",
-                    Message = score >= 70
-                        ? $"RG válido e {nameResult.Message}"
-                        : $"RG pode estar incorreto e {nameResult.Message}"
-                };
-            }
-            finally
-            {
-                var tempDir = Path.GetDirectoryName(path);
-
-                File.Delete(path);
-
-                if (Directory.Exists(tempDir) && !Directory.EnumerateFileSystemEntries(tempDir).Any())
-                {
-                    Directory.Delete(tempDir);
-                }
-            }
-        }
-
-        //=============================================== CPF ===============================================
-
-        private DocumentValidationDetail ValidateCPF(IFormFile file, string candidateName)
-        {
-            var extension = Path.GetExtension(file.FileName).ToLower();
-
-            if (extension != ".png" && extension != ".jpg" && extension != ".jpeg")
-            {
-                return new DocumentValidationDetail
-                {
-                    DocumentName = "CPF",
-                    Score = 0,
-                    Status = "Formato inválido",
-                    Message = "CPF deve ser enviado como imagem"
-                };
-            }
-
-            var path = SaveTempFile(file);
-
-            try
-            {
-                var text = _ocrService.ExtractText(path);
-                var score = _cpfValidator.CalculateScore(text);
-
-                var nameResult = CheckNameMatch(text, candidateName);
-
-                return new DocumentValidationDetail
-                {
-                    DocumentName = "CPF",
-                    Score = score,
-                    Status = score >= 70 ? "OK" : "Inconsistente",
-                    Message = score >= 70
-                        ? $"CPF válido e {nameResult.Message}"
-                        : $"CPF pode estar incorreto e {nameResult.Message}"
-                };
-            }
-            finally
-            {
-                File.Delete(path);
-            }
-        }
-
-        //=============================================== Comprovante de Endereço ===============================================
-
-        private DocumentValidationDetail ValidateAdressProof(IFormFile file, string candidateName)
-        {
-            var extension = Path.GetExtension(file.FileName).ToLower();
-
-            if (extension != ".png" && extension != ".jpg" && extension != ".jpeg")
-            {
-                return new DocumentValidationDetail
-                {
-                    DocumentName = "Comprovante de Endereço",
-                    Score = 0,
-                    Status = "Formato inválido",
-                    Message = "Comprovante de Endereço deve ser enviado como imagem"
-                };
-            }
-
-            var path = SaveTempFile(file);
-
-            try
-            {
-                var text = _ocrService.ExtractText(path);
-                var score = _adressValidator.CalculateScore(text);
-
-                var nameResult = CheckNameMatch(text, candidateName);
-
-                return new DocumentValidationDetail
-                {
-                    DocumentName = "Comprovante de Endereço",
-                    Score = score,
-                    Status = score >= 60 ? "OK" : "Inconsistente",
-                    Message = score >= 60
-                        ? $"Comprovante de Endereço válido e {nameResult.Message}"
-                        : $"Comprovante de Endereço pode estar incorreto e {nameResult.Message}"
-                };
-            }
-            finally
-            {
-                File.Delete(path);
-            }
-        }
-
-        //=============================================== PIS ===============================================
-
-        private DocumentValidationDetail ValidatePis(IFormFile file, string candidateName)
-        {
-            var extension = Path.GetExtension(file.FileName).ToLower();
-
-            if (extension != ".png" && extension != ".jpg" && extension != ".jpeg")
-            {
-                return new DocumentValidationDetail
-                {
-                    DocumentName = "PIS",
-                    Score = 0,
-                    Status = "Formato inválido",
-                    Message = "PIS deve ser enviado como imagem"
-                };
-            }
-
-            var path = SaveTempFile(file);
-
-            try
-            {
-                var text = _ocrService.ExtractText(path);
-                var score = _pisValidator.CalculateScore(text);
-
-                var nameResult = CheckNameMatch(text, candidateName);
-
-                return new DocumentValidationDetail
-                {
-                    DocumentName = "PIS",
-                    Score = score,
-                    Status = score >= 60 ? "OK" : "Inconsistente",
-                    Message = score >= 60
-                        ? $"PIS válido e {nameResult.Message}"
-                        : $"PIS pode estar incorreto e {nameResult.Message}"
-                };
-            }
-            finally
-            {
-                File.Delete(path);
-            }
-        }
-
-        //=============================================== Titulo de Eleitor ===============================================
-
-        private DocumentValidationDetail ValidateVoterCard(IFormFile file, string candidateName)
-        {
-            var extension = Path.GetExtension(file.FileName).ToLower();
-
-            if (extension != ".png" && extension != ".jpg" && extension != ".jpeg")
-            {
-                return new DocumentValidationDetail
-                {
-                    DocumentName = "Titulo de Eleitor",
-                    Score = 0,
-                    Status = "Formato inválido",
-                    Message = "Titulo de Eleitor deve ser enviado como imagem"
-                };
-            }
-
-            var path = SaveTempFile(file);
-
-            try
-            {
-                var text = _ocrService.ExtractText(path);
-                var score = _voterValidator.CalculateScore(text);
-
-                var nameResult = CheckNameMatch(text, candidateName);
-
-                return new DocumentValidationDetail
-                {
-                    DocumentName = "Titulo de Eleitor",
-                    Score = score,
-                    Status = score >= 60 ? "OK" : "Inconsistente",
-                    Message = score >= 60
-                        ? $"Titulo de Eleitor válido e {nameResult.Message}"
-                        : $"Titulo de Eleitor pode estar incorreto e {nameResult.Message}"
-                };
-            }
-            finally
-            {
-                File.Delete(path);
-            }
-        }
-
-        private NameMatchResult CheckNameMatch(string text, string candidateName)
-        {
-            var normalizedText = text.ToUpper();
-            var nameParts = candidateName.ToUpper().Split(" ");
-
-            int matches = nameParts.Count(part => normalizedText.Contains(part));
-
-            var result = new NameMatchResult
-            {
-                Matches = matches,
-                TotalParts = nameParts.Length,
-                IsMatch = matches >= nameParts.Length / 2
-            };
-
-            if (result.IsMatch)
-            {
-                result.Message = "Nome parcialmente compatível com o candidato.";
+                results.Add(_extratoValidator.ValidateExtrato(request.ExtratoFile, request.CandidateName));
             }
             else
             {
-                result.Message = "Nome não corresponde ao candidato.";
+                results.Add(new DocumentValidationDetail
+                {
+                    DocumentName = "Extrato - Santander",
+                    Score = 0,
+                    Status = "Não enviado",
+                    Message = "Extrato do Santander não foi enviado"
+                });
             }
 
-            return result;
-        }
+            if (request.NascimentoCasamentoFile != null)
+            {
+                results.Add(_nascimentoValidator.ValidateNascimentoCasamento(request.NascimentoCasamentoFile, request.CandidateName));
+            }
+            else
+            {
+                results.Add(new DocumentValidationDetail
+                {
+                    DocumentName = "Certidão de Nascimento ou Casamento",
+                    Score = 0,
+                    Status = "Não enviado",
+                    Message = "Certidão de Nascimento ou Casamento não foi enviada"
+                });
+            }
 
-        public List<DocumentValidationDetail> ValidateDocuments(DocumentUploadRequest request)
-        {
-            var results = new List<DocumentValidationDetail>();
+            if (request.AntecedentesFile != null)
+            {
+                results.Add(_antecedentesValidator.ValidateAntecedentes(request.AntecedentesFile, request.CandidateName));
+            }
+            else
+            {
+                results.Add(new DocumentValidationDetail
+                {
+                    DocumentName = "Antecedentes Criminais",
+                    Score = 0,
+                    Status = "Não enviado",
+                    Message = "Antecedentes Criminais não foi enviado"
+                });
+            }
 
-            if (request.RG != null)
-                results.Add(ValidateRG(request.RG, request.CandidateName));
+            if (request.DiplomaFile != null)
+            {
+                results.Add(_diplomaValidator.ValidateDiploma(request.DiplomaFile, request.CandidateName));
+            }
+            else
+            {
+                results.Add(new DocumentValidationDetail
+                {
+                    DocumentName = "Diploma ou Certificado Escolar",
+                    Score = 0,
+                    Status = "Não enviado",
+                    Message = "Diploma ou Certificado Escolar não foi enviado"
+                });
+            }
 
-            if (request.CPF != null)
-                results.Add(ValidateCPF(request.CPF, request.CandidateName));
+            if (request.HistoricoFile != null)
+            {
+                results.Add(_historicoValidator.ValidateHistorico(request.HistoricoFile, request.CandidateName));
+            }
+            else
+            {
+                results.Add(new DocumentValidationDetail
+                {
+                    DocumentName = "Histórico Escolar",
+                    Score = 0,
+                    Status = "Não enviado",
+                    Message = "Histórico Escolar não foi enviado"
+                });
+            }
+
+            if (request.BensFile != null)
+            {
+                results.Add(_bensValidator.ValidateBens(request.BensFile, request.CandidateName));
+            }
+            else
+            {
+                results.Add(new DocumentValidationDetail
+                {
+                    DocumentName = "Declaração de Bens",
+                    Score = 0,
+                    Status = "Não enviado",
+                    Message = "Declaração de Bens não foi enviada"
+                });
+            }
+
+            if (request.ProventosFile != null)
+            {
+                results.Add(_proventosValidator.ValidateProventos(request.ProventosFile, request.CandidateName));
+            }
+            else
+            {
+                results.Add(new DocumentValidationDetail
+                {
+                    DocumentName = "Declaração de Acúmulo",
+                    Score = 0,
+                    Status = "Não enviado",
+                    Message = "Declaração de Proventos não foi enviada"
+                });
+            }
+
+            if (request.AcumuloFile != null)
+            {
+                results.Add(_acumuloValidator.ValidateAcumulo(request.AcumuloFile, request.CandidateName));
+            }
+            else
+            {
+                results.Add(new DocumentValidationDetail
+                {
+                    DocumentName = "Declaração de Acúmulo",
+                    Score = 0,
+                    Status = "Não enviado",
+                    Message = "Declaração de Acúmulo não foi enviada"
+                });
+            }
 
             return results;
         }
